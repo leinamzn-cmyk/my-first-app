@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>ベルセレージュ 注文管理</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ivory:#FBF7F3;
+    --card:#FFFFFF;
+    --plum:#3D2B36;
+    --plum-soft:#6B5760;
+    --rose:#C08497;
+    --rose-deep:#A9647A;
+    --rose-pale:#F3E3E7;
+    --sage:#8B9D83;
+    --gold:#B9925A;
+    --border:#E8DFDC;
+    --danger:#B65C5C;
+    --shadow: 0 2px 10px rgba(61,43,54,0.06);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--ivory);
+    color:var(--plum);
+    font-family:'Noto Sans JP',sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .app{
+    max-width:1220px;
+    margin:0 auto;
+    padding:28px 20px 60px;
+  }
+  header.top{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    border-bottom:1px solid var(--border);
+    padding-bottom:18px;
+    margin-bottom:24px;
+    flex-wrap:wrap;
+    gap:8px;
+  }
+  .brand{
+    font-family:'Shippori Mincho',serif;
+    font-weight:700;
+    font-size:26px;
+    letter-spacing:0.06em;
+    color:var(--plum);
+  }
+  .brand small{
+    display:block;
+    font-family:'Noto Sans JP',sans-serif;
+    font-size:12px;
+    font-weight:500;
+    letter-spacing:0.18em;
+    color:var(--rose-deep);
+    margin-top:4px;
+  }
+  .tabs{
+    display:flex;
+    gap:4px;
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:4px;
+    box-shadow:var(--shadow);
+  }
+  .tab-btn{
+    border:none;
+    background:transparent;
+    padding:9px 18px;
+    font-family:'Noto Sans JP',sans-serif;
+    font-size:13.5px;
+    font-weight:600;
+    color:var(--plum-soft);
+    border-radius:7px;
+    cursor:pointer;
+    transition:all .15s ease;
+    white-space:nowrap;
+  }
+  .tab-btn:hover{ color:var(--plum); }
+  .tab-btn.active{
+    background:var(--rose);
+    color:#fff;
+  }
+  .panel{ display:none; }
+  .panel.active{ display:block; animation:fade .25s ease; }
+  @keyframes fade{ from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:translateY(0);} }
+
+  .card{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:20px 22px;
+    box-shadow:var(--shadow);
+  }
+  .card + .card{ margin-top:18px; }
+  .card h2{
+    font-family:'Shippori Mincho',serif;
+    font-size:18px;
+    font-weight:700;
+    margin:0 0 14px;
+    color:var(--plum);
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .card h2::before{
+    content:"";
+    width:5px;
+    height:16px;
+    background:var(--rose);
+    border-radius:3px;
+    display:inline-block;
+  }
+  .hint{ font-size:12.5px; color:var(--plum-soft); margin:-8px 0 14px; line-height:1.6; }
+
+  label{ font-size:12.5px; font-weight:600; color:var(--plum-soft); display:block; margin-bottom:5px; }
+  input[type=text], input[type=number], textarea, select{
+    width:100%;
+    padding:9px 11px;
+    border:1px solid var(--border);
+    border-radius:8px;
+    font-family:'Noto Sans JP',sans-serif;
+    font-size:13.5px;
+    color:var(--plum);
+    background:#fff;
+    outline:none;
+    transition:border-color .15s ease;
+  }
+  input:focus, textarea:focus, select:focus{ border-color:var(--rose); }
+  textarea{ resize:vertical; min-height:90px; font-family:ui-monospace, monospace; font-size:12.5px; }
+
+  .row{ display:flex; gap:12px; flex-wrap:wrap; }
+  .row > div{ flex:1; min-width:140px; }
+
+  button.btn{
+    border:none;
+    border-radius:8px;
+    padding:10px 18px;
+    font-family:'Noto Sans JP',sans-serif;
+    font-size:13.5px;
+    font-weight:600;
+    cursor:pointer;
+    transition:all .15s ease;
+  }
+  .btn-primary{ background:var(--rose); color:#fff; }
+  .btn-primary:hover{ background:var(--rose-deep); }
+  .btn-primary:disabled{ background:#D8C6CC; cursor:not-allowed; }
+  .btn-outline{ background:#fff; color:var(--plum); border:1px solid var(--border); }
+  .btn-outline:hover{ border-color:var(--rose); color:var(--rose-deep); }
+  .btn-outline:disabled{ color:#BEB3B8; border-color:var(--border); cursor:not-allowed; }
+  .btn-danger{ background:#fff; color:var(--danger); border:1px solid #E9D3D3; padding:6px 12px; font-size:12.5px; }
+  .btn-danger:hover{ background:#FBF0F0; }
+  .btn-sm{ padding:6px 12px; font-size:12.5px; }
+
+  table{ width:100%; border-collapse:collapse; font-size:13px; }
+  th{
+    text-align:left;
+    font-size:11.5px;
+    letter-spacing:0.04em;
+    color:var(--plum-soft);
+    font-weight:600;
+    padding:8px 10px;
+    border-bottom:1px solid var(--border);
+  }
+  td{ padding:9px 10px; border-bottom:1px solid #F1EBE8; vertical-align:middle; }
+  tr:last-child td{ border-bottom:none; }
+  td.num, th.num{ text-align:right; font-variant-numeric:tabular-nums; }
+  .empty-row td{ text-align:center; color:var(--plum-soft); padding:26px; font-size:13px; }
+  .row-unavail{ opacity:0.45; }
+  .code-cell{ color:var(--plum-soft); font-size:11.5px; white-space:nowrap; }
+  .cat-badge{ display:inline-block; font-size:10.5px; font-weight:700; padding:2px 7px; border-radius:20px; white-space:nowrap; }
+  .cat-cosme{ background:#E7EEF6; color:#4A6A93; }
+  .cat-health{ background:#FBE7EA; color:#B0546A; }
+  .cat-arcel{ background:#EAF1E6; color:#5E7A52; }
+  .cat-promo{ background:#FBEEDD; color:#B07A34; }
+
+  .qty-input{ width:64px; padding:6px 8px; text-align:right; }
+
+  .grid-2{ display:grid; grid-template-columns:1.5fr 1fr; gap:18px; align-items:start; }
+  @media(max-width:880px){ .grid-2{ grid-template-columns:1fr; } }
+
+  .filter-row{ display:flex; gap:10px; margin-bottom:12px; flex-wrap:wrap; }
+  .filter-row input[type=text]{ flex:2; min-width:160px; }
+  .filter-row select{ flex:1; min-width:130px; }
+
+  .member-toggle{ display:flex; gap:8px; margin-bottom:4px; }
+  .member-toggle button{
+    flex:1;
+    border:1.5px solid var(--border);
+    background:#fff;
+    border-radius:9px;
+    padding:10px 8px;
+    font-family:'Noto Sans JP',sans-serif;
+    font-weight:700;
+    font-size:13px;
+    color:var(--plum-soft);
+    cursor:pointer;
+    transition:all .15s ease;
+  }
+  .member-toggle button.active{
+    border-color:var(--rose);
+    background:var(--rose-pale);
+    color:var(--rose-deep);
+  }
+  .member-toggle button small{ display:block; font-weight:500; font-size:10.5px; margin-top:2px; }
+
+  .prod-list{ max-height:420px; overflow-y:auto; border:1px solid var(--border); border-radius:8px; }
+  .prod-list table{ font-size:12.8px; }
+  .prod-list thead th{ position:sticky; top:0; background:#fff; z-index:1; }
+
+  .summary-card{
+    background:linear-gradient(160deg, var(--plum) 0%, #4A3742 100%);
+    color:#fff;
+    border-radius:12px;
+    padding:22px 22px 20px;
+    box-shadow:var(--shadow);
+  }
+  .summary-card h2{ color:#fff; font-family:'Shippori Mincho',serif; font-size:17px; margin:0 0 16px; }
+  .summary-card h2::before{ background:var(--gold); }
+  .sum-row{ display:flex; justify-content:space-between; align-items:baseline; padding:7px 0; border-bottom:1px solid rgba(255,255,255,0.12); font-size:13px; }
+  .sum-row:last-of-type{ border-bottom:none; }
+  .sum-row .label{ color:rgba(255,255,255,0.72); }
+  .sum-row .val{ font-variant-numeric:tabular-nums; font-weight:600; }
+  .sum-total{
+    margin-top:14px;
+    padding-top:16px;
+    border-top:1px solid rgba(255,255,255,0.2);
+  }
+  .sum-total .label{ font-size:12px; letter-spacing:0.1em; color:var(--gold); }
+  .sum-total .amount{
+    font-family:'Shippori Mincho',serif;
+    font-size:34px;
+    font-weight:700;
+    margin-top:4px;
+    letter-spacing:0.02em;
+  }
+
+  .cart-table{ margin-top:16px; }
+  .cart-actions{ display:flex; gap:10px; margin-top:16px; }
+
+  .history-item{
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:14px 16px;
+    margin-bottom:10px;
+    cursor:pointer;
+    transition:border-color .15s ease;
+  }
+  .history-item:hover{ border-color:var(--rose); }
+  .history-item .h-top{ display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px; }
+  .history-item .h-name{ font-weight:700; font-size:14.5px; }
+  .history-item .h-date{ font-size:12px; color:var(--plum-soft); }
+  .history-item .h-meta{ font-size:12.5px; color:var(--plum-soft); margin-top:4px; }
+  .history-item .h-amount{ font-family:'Shippori Mincho',serif; font-weight:700; font-size:18px; color:var(--rose-deep); }
+  .history-detail{ display:none; margin-top:12px; padding-top:12px; border-top:1px dashed var(--border); }
+  .history-item.open .history-detail{ display:block; }
+
+  .badge{ display:inline-block; background:var(--rose-pale); color:var(--rose-deep); font-size:11px; font-weight:700; padding:2px 8px; border-radius:20px; }
+  .toolbar{ display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px; }
+  .status-msg{ font-size:12px; color:var(--sage); font-weight:600; min-height:16px; }
+  .top-actions{ display:flex; gap:8px; }
+  .empty-state{ text-align:center; padding:40px 20px; color:var(--plum-soft); font-size:13px; }
+  .mini-price{ font-size:11px; color:var(--plum-soft); }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header class="top">
+    <div class="brand">BearCereju<small>ご注文フォーム</small></div>
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="order">注文作成</button>
+      <button class="tab-btn" data-tab="history">注文履歴</button>
+    </div>
+  </header>
+
+  <!-- ============ ORDER TAB ============ -->
+  <div class="panel active" id="panel-order">
+    <div class="grid-2">
+      <div>
+        <div class="card">
+          <h2>会員種別</h2>
+          <div class="hint">選択した会員種別の価格が、商品リストの表示と注文金額に適用されます。</div>
+          <div class="member-toggle" id="memberToggle">
+            <button data-tier="gc" class="active">GC価格<small>GC会員</small></button>
+            <button data-tier="aa">AA価格<small>AA会員</small></button>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>商品を選択</h2>
+          <div class="filter-row">
+            <input type="text" id="orderSearch" placeholder="商品名・コードで検索...">
+            <select id="orderCatFilter">
+              <option value="">すべてのカテゴリ</option>
+            </select>
+          </div>
+          <div class="prod-list">
+            <table>
+              <thead><tr><th style="width:56px;">コード</th><th>商品名</th><th class="num" style="width:90px;">単価</th><th style="width:80px;">数量</th><th style="width:60px;"></th></tr></thead>
+              <tbody id="orderProductBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card cart-table">
+          <h2>注文明細</h2>
+          <table>
+            <thead><tr><th>商品名</th><th class="num">単価</th><th class="num">数量</th><th class="num">小計</th><th style="width:40px;"></th></tr></thead>
+            <tbody id="cartBody">
+              <tr class="empty-row"><td colspan="5">まだ商品が追加されていません</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div>
+        <div class="summary-card">
+          <h2>注文サマリー</h2>
+          <div class="sum-row"><span class="label">会員種別</span><span class="val" id="sumTier">GC価格</span></div>
+          <div class="sum-row"><span class="label">注文製品の種類数</span><span class="val" id="sumTypes">0 種類</span></div>
+          <div class="sum-row"><span class="label">注文数（合計数量）</span><span class="val" id="sumQty">0 点</span></div>
+          <div class="sum-row"><span class="label">商品小計</span><span class="val">¥<span id="sumSubtotal">0</span></span></div>
+          <div class="sum-row"><span class="label">送料</span><span class="val" id="sumShipping">¥0</span></div>
+          <div class="sum-total">
+            <div class="label">合計金額</div>
+            <div class="amount">¥<span id="sumTotal">0</span></div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:16px;">
+          <h2>お客様情報</h2>
+          <label>お客様名・注文名</label>
+          <input type="text" id="custName" placeholder="例）田中様 / 7月定期便">
+          <label style="margin-top:12px;">受け取り方法</label>
+          <label style="display:flex; align-items:center; gap:8px; font-weight:500; font-size:13.5px; color:var(--plum); margin-bottom:6px;">
+            <input type="checkbox" id="wantsDelivery" style="width:auto;">
+            配送を希望する
+          </label>
+          <div class="hint" style="margin:0 0 12px;">ご注文数量の合計が10点未満で配送をご希望の場合、送料 ¥1,000 がかかります（10点以上は送料無料です）。</div>
+          <label>メモ（任意）</label>
+          <textarea id="custNote" style="min-height:60px;" placeholder="配送希望日など"></textarea>
+          <div class="cart-actions">
+            <button class="btn btn-primary" id="saveOrderBtn" style="flex:1;">注文する</button>
+            <button class="btn btn-outline" id="clearCartBtn">クリア</button>
+          </div>
+          <div class="status-msg" id="orderStatus"></div>
+        </div>
+
+        <div class="card" id="sendCard" style="margin-top:16px; display:none;">
+          <h2>注文内容をお店に送る</h2>
+          <div class="hint" style="margin:0 0 12px;">ご注文ありがとうございます。下のボタンからLINE公式アカウントに注文内容を送ってください。</div>
+          <textarea id="orderText" readonly style="min-height:220px; font-family:ui-monospace,monospace; font-size:12.5px;"></textarea>
+          <div class="cart-actions" style="flex-wrap:wrap;">
+            <button class="btn btn-primary" id="copyOrderBtn">注文内容をコピー</button>
+            <button class="btn btn-outline" id="lineShareBtn">LINEで送る</button>
+          </div>
+          <div class="status-msg" id="copyStatus"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ HISTORY TAB ============ -->
+  <div class="panel" id="panel-history">
+    <div class="card">
+      <div class="toolbar">
+        <h2 style="margin:0;">保存済みの注文</h2>
+        <input type="text" id="historySearch" placeholder="お客様名で検索..." style="width:220px;">
+      </div>
+      <div id="historyList"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function(){
+  const $ = (id) => document.getElementById(id);
+  const yen = (n) => Number(n||0).toLocaleString('ja-JP');
+  const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+
+  const CATEGORIES = ['日用品/化粧品','健康食品','アールセルベ','販促品'];
+  const CAT_CLASS = {'日用品/化粧品':'cat-cosme','健康食品':'cat-health','アールセルベ':'cat-arcel','販促品':'cat-promo'};
+  const TIER_LABEL = {gc:'GC価格', aa:'AA価格'};
+
+  let products = [];   // {id, code, category, name, gc, aa}  price = number or null
+  let cart = [];        // {productId, name, price, qty}
+  let orders = [];      // saved orders
+  let currentTier = 'gc';
+
+  // ---------- default product master (from 2026.07.11 価格表) ----------
+  function defaultProducts(){
+    const P = (code,category,name,gc,aa)=>({id:uid(),code,category,name,gc,aa});
+    const list = [];
+    // 日用品/化粧品
+    const cosme = [
+      ['B01','スクラブ',5010,3950,3510],['B02','スクラブアフター',5010,3950,3510],['B03','HG',10000,7890,7010],
+      ['B04','UV',5010,3950,3510],['J06','シャンプー/しっとり',5980,4830,4360],['J07','シャンプー/ボリューム',5980,4830,4360],
+      ['J08','ヘアパック/しっとり',5980,4830,4360],['B09','ヘアパック/ボリューム',5010,3950,3510],['J10','マイルドスキン',5980,4830,4360],
+      ['B11','エコロ',4880,3940,3560],['B16','MEオイル',5990,4740,4220],['J17','フゥット',5980,4830,4360],
+      ['J18','バスソープ',5980,4830,4360],['J19','デンタル',5980,4830,4360],['B26','SEクリーム',10000,7890,7010],
+      ['B27','アンプチッド',5010,3950,3510],['J29','デイリー',5980,4830,4360],['B34','BBup/α',10000,7890,7010],
+      ['B40','ファンデ/ナチュラル',5010,3950,3510],['B41','ファンデ/ピンク',5010,3950,3510],['B42','ファンデ/オークル',5010,3950,3510],
+      ['B43','コンシーラー',5010,3950,3510],['B53','グロス',4010,3270,2910],['B55','アイブロウ/ブラック',4010,3270,2910],
+      ['B56','アイブロウ/ブラウン',4010,3270,2910],['B57','アイブロウ/グレー',4010,3270,2910],['B58','アイライナー/ブラック',4010,3270,2910],
+      ['B59','アイライナー/ブラウン',4010,3270,2910],['B60','ルージュ/レッド',5010,3950,3510],['B61','ルージュ/ピンク',5010,3950,3510],
+      ['B62','ルージュ/オレンジ',5010,3950,3510],['B78','スクラブアフターx3',5010,3950,3510],['B79','UV×3',5010,3950,3510],
+      ['B82','ホットジェル',null,null,4220],['J85','SQオイル',11960,9660,8720],['B86','BBupスーパー',5990,4740,4220],
+      ['B87','サラシトツルリン',5980,4830,4360],['B88','BBup/DRY',10000,7890,7010],['B91','WH',5990,4740,4220],
+      ['B92','HGマキシム',5990,4740,4220],['B95','ATC',5010,3950,3510],['B98','トニック',5010,3950,3510],
+      ['B99','ナイトオンリー',null,null,5610],
+    ];
+    cosme.forEach(r=> list.push(P(r[0],'日用品/化粧品',r[1],r[3],r[4])));
+
+    const health = [
+      ['J12','ナチュラルコンク',5980,4830,4360],['B13','シーフィールドファイバー',7860,6190,5500],['J14','ミネラル出汁',5980,4830,4360],
+      ['B20','ファミリーコンク',4910,3870,3440],['B22','コロイドファイバー',9810,7740,6880],['B23','アセラグ茶（パック）',4910,3870,3440],
+      ['B24','ダイエタリー/ノーマル',5880,4650,4140],['J25','ハイブレス',11960,9660,8720],['B30','らーめん',5180,4630,4390],
+      ['B31','サケカル',5180,4630,4390],['B33','SODwater',4910,3870,3440],['J35','スパイスイージー',11960,9660,8720],
+      ['B36','張徒歩労',9810,7740,6880],['B37','透明費備人',null,null,20630],['J38','イイチョウシ',11960,9660,8720],
+      ['J45','張徒歩労にプラス1',11960,9660,8720],['J46','夜の飛香',5980,4830,4360],['J47','透明費備人.仕事もっと',15200,null,8720],
+      ['B70','ライブセルウォーター',132660,128150,119130],['B71','カートリッジ',38470,32500,30090],['B74','攻守菌',7860,6190,5500],
+      ['B83','アセラグ茶（粉）',4910,3870,3440],['B84','SODオイル',9810,7740,6880],['B89','ミネラルプラス',9810,7740,6880],
+      ['B90','ほがらか元気',9810,7740,6880],['J93','アトビステ',11960,9660,8720],['B94','ザ・スーパー',null,null,8780],
+      ['B96','のど飴タブレット',9810,7740,6880],['B97','のど飴コンク',9810,7740,6880],
+    ];
+    health.forEach(r=> list.push(P(r[0],'健康食品',r[1],r[3],r[4])));
+
+    const arcel = [
+      ['M11','ジェル/ハード',4010,3270,2910],['M12','ジェル/ウェット',4010,3270,2910],['M13','ファンデ/ナチュラル',5010,3950,3510],
+      ['M17','マスカラ',4010,3270,2910],['M18','アイライナー/ブラック',4010,3270,2910],
+      ['JM2','コナーアップエコロ',4880,3940,3560],['M21','除菌消臭ジェル',5010,3950,3510],['MA1','アイシャドウ（2色）',4010,3270,2910],
+      ['M28','ミネラルパウダー',4010,3270,2910],['M29','ゴールドパウダー',4010,3270,2910],
+    ];
+    arcel.forEach(r=> list.push(P(r[0],'アールセルベ',r[1],r[3],r[4])));
+
+    // 販促品: single price -> applied to all tiers
+    const promo = [
+      ['エコロ用ポンプ',70],['シャンプー用ポンプ',60],['にわとりスプレーボトル',130],['ポンプボトル',230],
+      ['うすめボトル（希釈ボトル）',70],['滴下ボトル（8個セット）',100],['ミニスプレーボトル（3個セット）',100],
+      ['ベルセファンデケース',1280],['アールセルベファンデケース',500],['アイシャドウケース（6色）',250],
+      ['アイシャドウケース（2色）',200],['アイシャドウチップ',50],['ミネラルのキャップ',25],['泡ボトル大',390],['泡ボトル小',280],
+    ];
+    promo.forEach(r=> list.push(P('','販促品',r[0],r[1],r[1])));
+
+    return list;
+  }
+
+  // ---------- storage (uses window.storage when available e.g. inside Claude.ai;
+  // falls back to localStorage so the downloaded file also works standalone) ----------
+  const LS_PREFIX = 'belle_sereige_order_tool:';
+  async function storageGet(key){
+    if(typeof window.storage !== 'undefined' && window.storage && typeof window.storage.get === 'function'){
+      try{ return await window.storage.get(key); }catch(e){ /* fall through */ }
+    }
+    try{
+      const raw = localStorage.getItem(LS_PREFIX+key);
+      return raw===null ? null : {key, value: raw};
+    }catch(e){ return null; }
+  }
+  async function storageSet(key, value){
+    if(typeof window.storage !== 'undefined' && window.storage && typeof window.storage.set === 'function'){
+      try{ return await window.storage.set(key, value, false); }catch(e){ /* fall through */ }
+    }
+    try{ localStorage.setItem(LS_PREFIX+key, value); return {key, value}; }catch(e){ return null; }
+  }
+
+  // ---------- catalog patches ----------
+  // Targeted edits requested after initial launch, applied once per browser.
+  const CATALOG_PATCHES = [
+    { id:'2026-07-14-01', run: (list)=>{
+        list = list.filter(p => p.code !== 'M19');
+        const rename = (code, name) => { const p = list.find(x=>x.code===code); if(p) p.name = name; };
+        rename('J12','ナチュラルコンク');
+        rename('B13','シーフィールドファイバー');
+        rename('J14','ミネラル出汁');
+        return list;
+    }},
+    { id:'2026-07-14-02', run: (list)=>{
+        const p = list.find(x=>x.code==='B20'); if(p) p.name = 'ファミリーコンク';
+        return list;
+    }},
+    { id:'2026-07-14-03', run: (list)=>{
+        const rename = (code, name) => { const p = list.find(x=>x.code===code); if(p) p.name = name; };
+        rename('B22','コロイドファイバー');
+        rename('B23','アセラグ茶（パック）');
+        rename('B02','スクラブアフター');
+        rename('J17','フゥット');
+        rename('B78','スクラブアフターx3');
+        rename('B87','サラシトツルリン');
+        return list;
+    }},
+  ];
+  async function applyCatalogPatches(){
+    let applied = [];
+    try{
+      const a = await storageGet('appliedPatches');
+      applied = a ? JSON.parse(a.value) : [];
+    }catch(e){ applied = []; }
+    let changed = false;
+    CATALOG_PATCHES.forEach(patch=>{
+      if(!applied.includes(patch.id)){
+        products = patch.run(products);
+        applied.push(patch.id);
+        changed = true;
+      }
+    });
+    if(changed){
+      try{ await saveProducts(); await storageSet('appliedPatches', JSON.stringify(applied)); }catch(e){}
+    }
+  }
+
+  async function loadAll(){
+    try{
+      const p = await storageGet('products');
+      products = p ? JSON.parse(p.value) : [];
+    }catch(e){ products = []; }
+    try{
+      const o = await storageGet('orders');
+      orders = o ? JSON.parse(o.value) : [];
+    }catch(e){ orders = []; }
+    try{
+      const s = await storageGet('settings');
+      if(s){ const parsed = JSON.parse(s.value); if(parsed.tier) currentTier = parsed.tier; }
+    }catch(e){}
+
+    const needsMigration = products.length === 0 || products.some(p => p.category === undefined || p.aa === undefined || ('nc' in p));
+    if(needsMigration){
+      products = defaultProducts();
+      try{ await saveProducts(); }catch(e){ /* continue rendering even if save fails */ }
+    } else {
+      await applyCatalogPatches();
+    }
+    populateCategoryFilters();
+    setMemberTierUI(currentTier);
+    renderOrderProductList();
+    renderHistory();
+  }
+
+  async function saveProducts(){
+    await storageSet('products', JSON.stringify(products));
+  }
+  async function saveOrders(){
+    await storageSet('orders', JSON.stringify(orders));
+  }
+  async function saveSettings(){
+    await storageSet('settings', JSON.stringify({tier: currentTier}));
+  }
+
+  function populateCategoryFilters(){
+    [$('orderCatFilter')].filter(Boolean).forEach(sel=>{
+      const current = sel.value;
+      sel.innerHTML = '<option value="">すべてのカテゴリ</option>' + CATEGORIES.map(c=>`<option value="${c}">${c}</option>`).join('');
+      sel.value = current;
+    });
+  }
+
+  // ---------- member tier ----------
+  $('memberToggle').addEventListener('click', async (e)=>{
+    const btn = e.target.closest('button');
+    if(!btn) return;
+    currentTier = btn.dataset.tier;
+    setMemberTierUI(currentTier);
+    await saveSettings();
+    renderOrderProductList($('orderSearch').value, $('orderCatFilter').value);
+    updateSummary();
+  });
+  function setMemberTierUI(tier){
+    document.querySelectorAll('#memberToggle button').forEach(b=> b.classList.toggle('active', b.dataset.tier===tier));
+    $('sumTier').textContent = TIER_LABEL[tier];
+  }
+
+  function priceFor(prod, tier){
+    return prod[tier];
+  }
+
+  // ---------- tabs ----------
+  document.querySelectorAll('.tab-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+      document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+      btn.classList.add('active');
+      $('panel-'+btn.dataset.tab).classList.add('active');
+    });
+  });
+
+  function escapeAttr(s){
+    return String(s==null?'':s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+  function priceDisplay(v){ return (v===null || v===undefined || v==='') ? 'ー' : '¥'+yen(v); }
+
+  function downloadCSV(content, filename){
+    const blob = new Blob(['\uFEFF'+content], {type:'text/csv;charset=utf-8;'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  // ---------- order builder ----------
+  function renderOrderProductList(filter, cat){
+    const body = $('orderProductBody');
+    const f = (filter||'').trim().toLowerCase();
+    let list = products;
+    if(cat) list = list.filter(p=>p.category===cat);
+    if(f) list = list.filter(p=> p.name.toLowerCase().includes(f) || (p.code||'').toLowerCase().includes(f));
+    if(list.length === 0){
+      body.innerHTML = '<tr class="empty-row"><td colspan="5">該当する商品がありません</td></tr>';
+      return;
+    }
+    body.innerHTML = list.map(p=>{
+      const price = priceFor(p, currentTier);
+      const unavailable = (price===null || price===undefined);
+      return `
+      <tr data-id="${p.id}" class="${unavailable?'row-unavail':''}">
+        <td class="code-cell">${escapeAttr(p.code)}</td>
+        <td>${escapeAttr(p.name)}<br><span class="cat-badge ${CAT_CLASS[p.category]||''}">${escapeAttr(p.category)}</span></td>
+        <td class="num">${priceDisplay(price)}</td>
+        <td><input type="number" class="qty-input add-qty" min="1" value="1" ${unavailable?'disabled':''}></td>
+        <td><button class="btn btn-outline btn-sm add-to-cart" ${unavailable?'disabled':''}>追加</button></td>
+      </tr>`;
+    }).join('');
+
+    body.querySelectorAll('.add-to-cart').forEach(btn=>{
+      btn.addEventListener('click', (e)=>{
+        const tr = e.target.closest('tr');
+        const id = tr.dataset.id;
+        const qty = Math.max(1, Number(tr.querySelector('.add-qty').value) || 1);
+        const prod = products.find(x=>x.id===id);
+        if(!prod) return;
+        const price = priceFor(prod, currentTier);
+        if(price===null || price===undefined) return;
+        const existing = cart.find(c=>c.productId===id);
+        if(existing){ existing.qty += qty; } else { cart.push({productId:id, name:prod.name, price, qty}); }
+        renderCart();
+      });
+    });
+  }
+
+  $('orderSearch').addEventListener('input', (e)=> renderOrderProductList(e.target.value, $('orderCatFilter').value));
+  $('orderCatFilter').addEventListener('change', (e)=> renderOrderProductList($('orderSearch').value, e.target.value));
+
+  function renderCart(){
+    const body = $('cartBody');
+    if(cart.length === 0){
+      body.innerHTML = '<tr class="empty-row"><td colspan="5">まだ商品が追加されていません</td></tr>';
+    } else {
+      body.innerHTML = cart.map((c,idx)=>`
+        <tr data-idx="${idx}">
+          <td>${escapeAttr(c.name)}</td>
+          <td class="num">¥${yen(c.price)}</td>
+          <td class="num"><input type="number" class="qty-input cart-qty" min="1" value="${c.qty}"></td>
+          <td class="num">¥${yen(c.price*c.qty)}</td>
+          <td><button class="btn btn-danger cart-del">×</button></td>
+        </tr>
+      `).join('');
+      body.querySelectorAll('.cart-qty').forEach(inp=>{
+        inp.addEventListener('change', (e)=>{
+          const idx = Number(e.target.closest('tr').dataset.idx);
+          const v = Math.max(1, Number(e.target.value)||1);
+          cart[idx].qty = v;
+          renderCart();
+        });
+      });
+      body.querySelectorAll('.cart-del').forEach(btn=>{
+        btn.addEventListener('click', (e)=>{
+          const idx = Number(e.target.closest('tr').dataset.idx);
+          cart.splice(idx,1);
+          renderCart();
+        });
+      });
+    }
+    updateSummary();
+  }
+
+  function calcShippingFee(totalQty, wantsDelivery){
+    if(!wantsDelivery) return 0;
+    if(totalQty <= 0) return 0;
+    return totalQty < 10 ? 1000 : 0;
+  }
+
+  function updateSummary(){
+    const types = cart.length;
+    const totalQty = cart.reduce((s,c)=>s+c.qty,0);
+    const subtotal = cart.reduce((s,c)=>s+c.qty*c.price,0);
+    const wantsDelivery = $('wantsDelivery').checked;
+    const shippingFee = calcShippingFee(totalQty, wantsDelivery);
+    const totalAmount = subtotal + shippingFee;
+    $('sumTypes').textContent = types + ' 種類';
+    $('sumQty').textContent = totalQty + ' 点';
+    $('sumSubtotal').textContent = yen(subtotal);
+    $('sumShipping').textContent = shippingFee>0 ? ('¥'+yen(shippingFee)) : '¥0';
+    $('sumTotal').textContent = yen(totalAmount);
+    $('sumTier').textContent = TIER_LABEL[currentTier];
+  }
+
+  $('wantsDelivery').addEventListener('change', updateSummary);
+
+  $('clearCartBtn').addEventListener('click', ()=>{
+    if(cart.length===0) return;
+    if(!confirm('注文明細をクリアしますか？')) return;
+    cart = [];
+    $('custName').value=''; $('custNote').value=''; $('wantsDelivery').checked = false;
+    $('sendCard').style.display = 'none';
+    renderCart();
+  });
+
+  function buildOrderText(order){
+    const tierLabel = TIER_LABEL[order.tier] || 'GC価格';
+    const d = new Date(order.date);
+    const dateStr = `${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+    const lines = [];
+    lines.push('【ご注文】BearCereju');
+    lines.push(`日時: ${dateStr}`);
+    lines.push(`お客様名: ${order.customerName}`);
+    lines.push(`会員種別: ${tierLabel}`);
+    lines.push('------------------------');
+    order.items.forEach(it=> lines.push(`${it.name} ×${it.qty}　¥${yen(it.price*it.qty)}`));
+    lines.push('------------------------');
+    lines.push(`種類数: ${order.typeCount}種類`);
+    lines.push(`数量合計: ${order.totalQty}点`);
+    lines.push(`商品小計: ¥${yen(order.subtotal)}`);
+    lines.push(`送料: ¥${yen(order.shippingFee||0)}`);
+    lines.push(`合計金額: ¥${yen(order.totalAmount)}`);
+    lines.push(`受け取り方法: ${order.wantsDelivery ? '配送希望' : '受け取り'}`);
+    if(order.note) lines.push(`メモ: ${order.note}`);
+    return lines.join('\n');
+  }
+
+  async function copyText(text){
+    try{
+      await navigator.clipboard.writeText(text);
+      return true;
+    }catch(e){
+      try{
+        const ta = $('orderText');
+        ta.focus(); ta.select();
+        document.execCommand('copy');
+        return true;
+      }catch(e2){ return false; }
+    }
+  }
+
+  const LINE_OA_ID = '@948dmphr';
+
+  $('copyOrderBtn').addEventListener('click', async ()=>{
+    const ok = await copyText($('orderText').value);
+    $('copyStatus').textContent = ok ? 'コピーしました。LINEに貼り付けて送信してください。' : 'コピーできませんでした。テキストを選択して手動でコピーしてください。';
+    setTimeout(()=>{ $('copyStatus').textContent=''; }, 4000);
+  });
+  $('lineShareBtn').addEventListener('click', ()=>{
+    window.open('https://line.me/R/oaMessage/' + LINE_OA_ID + '/?' + encodeURIComponent($('orderText').value), '_blank');
+  });
+
+  $('saveOrderBtn').addEventListener('click', async ()=>{
+    if(cart.length===0){ alert('商品を1件以上追加してください'); return; }
+    const name = $('custName').value.trim() || '（お客様名未入力）';
+    const note = $('custNote').value.trim();
+    const wantsDelivery = $('wantsDelivery').checked;
+    const totalQty = cart.reduce((s,c)=>s+c.qty,0);
+    const subtotal = cart.reduce((s,c)=>s+c.qty*c.price,0);
+    const shippingFee = calcShippingFee(totalQty, wantsDelivery);
+    const totalAmount = subtotal + shippingFee;
+    const order = {
+      id: uid(),
+      customerName: name,
+      note,
+      tier: currentTier,
+      wantsDelivery,
+      date: new Date().toISOString(),
+      items: cart.map(c=>({name:c.name, price:c.price, qty:c.qty})),
+      typeCount: cart.length,
+      totalQty,
+      subtotal,
+      shippingFee,
+      totalAmount
+    };
+    orders.unshift(order);
+    await saveOrders();
+    cart = [];
+    $('custName').value=''; $('custNote').value=''; $('wantsDelivery').checked = false;
+    renderCart();
+    $('orderStatus').textContent = '注文を受け付けました';
+    $('orderText').value = buildOrderText(order);
+    $('sendCard').style.display = 'block';
+    $('sendCard').scrollIntoView({behavior:'smooth', block:'start'});
+    renderHistory();
+    setTimeout(()=>{ $('orderStatus').textContent=''; }, 3000);
+  });
+
+  // ---------- history ----------
+  function renderHistory(filter){
+    const listEl = $('historyList');
+    const f = (filter||'').trim().toLowerCase();
+    const list = f ? orders.filter(o=>o.customerName.toLowerCase().includes(f)) : orders;
+    if(list.length === 0){
+      listEl.innerHTML = '<div class="empty-state">保存された注文はまだありません</div>';
+      return;
+    }
+    listEl.innerHTML = list.map(o=>{
+      const d = new Date(o.date);
+      const dateStr = `${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+      const subtotal = (o.subtotal !== undefined) ? o.subtotal : o.totalAmount;
+      const shippingFee = o.shippingFee || 0;
+      const deliveryLabel = o.wantsDelivery ? '配送希望' : '受け取り';
+      const itemsHtml = o.items.map(it=>`
+        <tr><td>${escapeAttr(it.name)}</td><td class="num">¥${yen(it.price)}</td><td class="num">${it.qty}</td><td class="num">¥${yen(it.price*it.qty)}</td></tr>
+      `).join('');
+      return `
+        <div class="history-item" data-id="${o.id}">
+          <div class="h-top">
+            <div>
+              <div class="h-name">${escapeAttr(o.customerName)} <span class="badge">${TIER_LABEL[o.tier]||'GC価格'}</span></div>
+              <div class="h-date">${dateStr}</div>
+            </div>
+            <div class="h-amount">¥${yen(o.totalAmount)}</div>
+          </div>
+          <div class="h-meta">${o.typeCount} 種類 ・ 合計 ${o.totalQty} 点 ・ ${deliveryLabel}${shippingFee>0 ? `（送料 ¥${yen(shippingFee)}）` : ''}${o.note ? ' ・ ' + escapeAttr(o.note) : ''}</div>
+          <div class="history-detail">
+            <table>
+              <thead><tr><th>商品名</th><th class="num">単価</th><th class="num">数量</th><th class="num">小計</th></tr></thead>
+              <tbody>${itemsHtml}</tbody>
+              <tfoot>
+                <tr><td colspan="3" class="num">商品小計</td><td class="num">¥${yen(subtotal)}</td></tr>
+                <tr><td colspan="3" class="num">送料</td><td class="num">¥${yen(shippingFee)}</td></tr>
+                <tr><td colspan="3" class="num"><strong>合計金額</strong></td><td class="num"><strong>¥${yen(o.totalAmount)}</strong></td></tr>
+              </tfoot>
+            </table>
+            <div class="cart-actions">
+              <button class="btn btn-outline btn-sm hist-csv">CSV書き出し</button>
+              <button class="btn btn-danger hist-del">この注文を削除</button>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    listEl.querySelectorAll('.history-item').forEach(el=>{
+      el.addEventListener('click', (e)=>{
+        if(e.target.closest('.hist-del') || e.target.closest('.hist-csv')) return;
+        el.classList.toggle('open');
+      });
+    });
+    listEl.querySelectorAll('.hist-del').forEach(btn=>{
+      btn.addEventListener('click', async (e)=>{
+        e.stopPropagation();
+        const id = e.target.closest('.history-item').dataset.id;
+        if(!confirm('この注文履歴を削除しますか？')) return;
+        orders = orders.filter(o=>o.id!==id);
+        await saveOrders();
+        renderHistory($('historySearch').value);
+      });
+    });
+    listEl.querySelectorAll('.hist-csv').forEach(btn=>{
+      btn.addEventListener('click', (e)=>{
+        e.stopPropagation();
+        const id = e.target.closest('.history-item').dataset.id;
+        const order = orders.find(o=>o.id===id);
+        if(!order) return;
+        const rows = ['商品名,単価,数量,小計', ...order.items.map(it=>`${it.name},${it.price},${it.qty},${it.price*it.qty}`)];
+        rows.push('');
+        rows.push(`会員種別,${TIER_LABEL[order.tier]||'GC価格'}`);
+        rows.push(`合計種類数,${order.typeCount}`);
+        rows.push(`合計数量,${order.totalQty}`);
+        rows.push(`商品小計,${(order.subtotal !== undefined) ? order.subtotal : order.totalAmount}`);
+        rows.push(`送料,${order.shippingFee || 0}`);
+        rows.push(`合計金額,${order.totalAmount}`);
+        downloadCSV(rows.join('\n'), `注文_${order.customerName}_${order.date.slice(0,10)}.csv`);
+      });
+    });
+  }
+
+  $('historySearch').addEventListener('input', (e)=> renderHistory(e.target.value));
+
+  loadAll();
+})();
+</script>
+</body>
+</html>
